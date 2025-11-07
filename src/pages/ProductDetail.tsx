@@ -1,15 +1,111 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Heart, Share2, MapPin, Eye, Clock, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Heart, Share2, MapPin, Eye, Clock, ShieldCheck, ShoppingCart } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { products } from "@/data/products";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { useState, useEffect } from "react";
 
 const ProductDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const product = products.find(p => p.id === id);
+  const [isInWishlist, setIsInWishlist] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (user && id) {
+      checkWishlist();
+    }
+  }, [user, id]);
+
+  const checkWishlist = async () => {
+    const { data } = await supabase
+      .from("wishlist")
+      .select("id")
+      .eq("user_id", user!.id)
+      .eq("product_id", id!)
+      .maybeSingle();
+    
+    setIsInWishlist(!!data);
+  };
+
+  const toggleWishlist = async () => {
+    if (!user) {
+      toast.error("Silakan login terlebih dahulu");
+      navigate("/auth");
+      return;
+    }
+
+    setIsLoading(true);
+
+    if (isInWishlist) {
+      const { error } = await supabase
+        .from("wishlist")
+        .delete()
+        .eq("user_id", user.id)
+        .eq("product_id", id!);
+      
+      if (!error) {
+        setIsInWishlist(false);
+        toast.success("Dihapus dari wishlist");
+      }
+    } else {
+      const { error } = await supabase
+        .from("wishlist")
+        .insert({ user_id: user.id, product_id: id! });
+      
+      if (!error) {
+        setIsInWishlist(true);
+        toast.success("Ditambahkan ke wishlist");
+      }
+    }
+
+    setIsLoading(false);
+  };
+
+  const addToCart = async () => {
+    if (!user) {
+      toast.error("Silakan login terlebih dahulu");
+      navigate("/auth");
+      return;
+    }
+
+    setIsLoading(true);
+
+    const { data: existing } = await supabase
+      .from("cart")
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("product_id", id!)
+      .maybeSingle();
+
+    if (existing) {
+      const { error } = await supabase
+        .from("cart")
+        .update({ quantity: existing.quantity + 1 })
+        .eq("id", existing.id);
+      
+      if (!error) {
+        toast.success("Jumlah produk di keranjang diperbarui");
+      }
+    } else {
+      const { error } = await supabase
+        .from("cart")
+        .insert({ user_id: user.id, product_id: id!, quantity: 1 });
+      
+      if (!error) {
+        toast.success("Ditambahkan ke keranjang");
+      }
+    }
+
+    setIsLoading(false);
+  };
 
   if (!product) {
     return (
@@ -152,15 +248,21 @@ const ProductDetail = () => {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex gap-3">
-              <Button className="flex-1" size="lg">
+            <div className="space-y-3">
+              <div className="flex gap-3">
+                <Button className="flex-1" size="lg" onClick={addToCart} disabled={isLoading}>
+                  <ShoppingCart className="mr-2 h-5 w-5" />
+                  Tambah ke Keranjang
+                </Button>
+                <Button variant="outline" size="lg" onClick={toggleWishlist} disabled={isLoading}>
+                  <Heart className={`h-5 w-5 ${isInWishlist ? "fill-primary text-primary" : ""}`} />
+                </Button>
+                <Button variant="outline" size="lg">
+                  <Share2 className="h-5 w-5" />
+                </Button>
+              </div>
+              <Button className="w-full" size="lg" variant="secondary">
                 Hubungi Penjual
-              </Button>
-              <Button variant="outline" size="lg">
-                <Heart className="h-5 w-5" />
-              </Button>
-              <Button variant="outline" size="lg">
-                <Share2 className="h-5 w-5" />
               </Button>
             </div>
           </div>

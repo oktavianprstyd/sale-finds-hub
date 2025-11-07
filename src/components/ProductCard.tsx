@@ -2,6 +2,10 @@ import { Heart, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { useState, useEffect } from "react";
 
 interface ProductCardProps {
   id?: string;
@@ -29,11 +33,67 @@ const ProductCard = ({
   isSale,
 }: ProductCardProps) => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [isInWishlist, setIsInWishlist] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (user && id) {
+      checkWishlist();
+    }
+  }, [user, id]);
+
+  const checkWishlist = async () => {
+    const { data } = await supabase
+      .from("wishlist")
+      .select("id")
+      .eq("user_id", user!.id)
+      .eq("product_id", id!)
+      .maybeSingle();
+    
+    setIsInWishlist(!!data);
+  };
 
   const handleClick = () => {
     if (id) {
       navigate(`/product/${id}`);
     }
+  };
+
+  const toggleWishlist = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    if (!user) {
+      toast.error("Silakan login terlebih dahulu");
+      navigate("/auth");
+      return;
+    }
+
+    setIsLoading(true);
+
+    if (isInWishlist) {
+      const { error } = await supabase
+        .from("wishlist")
+        .delete()
+        .eq("user_id", user.id)
+        .eq("product_id", id!);
+      
+      if (!error) {
+        setIsInWishlist(false);
+        toast.success("Dihapus dari wishlist");
+      }
+    } else {
+      const { error } = await supabase
+        .from("wishlist")
+        .insert({ user_id: user.id, product_id: id! });
+      
+      if (!error) {
+        setIsInWishlist(true);
+        toast.success("Ditambahkan ke wishlist");
+      }
+    }
+
+    setIsLoading(false);
   };
 
   return (
@@ -56,8 +116,10 @@ const ProductCard = ({
           variant="ghost"
           size="icon"
           className="absolute right-2 top-2 bg-background/80 backdrop-blur hover:bg-background"
+          onClick={toggleWishlist}
+          disabled={isLoading}
         >
-          <Heart className="h-4 w-4" />
+          <Heart className={`h-4 w-4 ${isInWishlist ? "fill-primary text-primary" : ""}`} />
         </Button>
       </div>
 
