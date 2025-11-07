@@ -1,8 +1,10 @@
 import { Heart, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useNavigate } from "react-router-dom";
 
 interface ProductCardProps {
+  id?: string;
   image: string;
   title: string;
   brand: string;
@@ -15,6 +17,7 @@ interface ProductCardProps {
 }
 
 const ProductCard = ({
+  id,
   image,
   title,
   brand,
@@ -25,8 +28,19 @@ const ProductCard = ({
   condition,
   isSale,
 }: ProductCardProps) => {
+  const navigate = useNavigate();
+
+  const handleClick = () => {
+    if (id) {
+      navigate(`/product/${id}`);
+    }
+  };
+
   return (
-    <div className="group relative overflow-hidden rounded-lg border bg-card shadow-card transition-all hover:shadow-card-hover">
+    <div 
+      onClick={handleClick}
+      className="group relative overflow-hidden rounded-lg border bg-card shadow-card transition-all hover:shadow-card-hover cursor-pointer"
+    >
       <div className="relative aspect-square overflow-hidden bg-muted">
         <img
           src={image}

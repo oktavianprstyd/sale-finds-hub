@@ -1,54 +1,10 @@
 import { Tag, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ProductCard from "./ProductCard";
-import productPhone from "@/assets/product-phone.jpg";
-import productBag from "@/assets/product-bag.jpg";
-import productCamera from "@/assets/product-camera.jpg";
-import productShoes from "@/assets/product-shoes.jpg";
+import { products } from "@/data/products";
 
 const SaleSection = () => {
-  const saleProducts = [
-    {
-      image: productPhone,
-      title: "iPhone 12 Pro Max 256GB",
-      brand: "Apple",
-      price: 8500000,
-      originalPrice: 12000000,
-      discount: 29,
-      location: "Jakarta Selatan",
-      condition: "Seperti Baru" as const,
-    },
-    {
-      image: productBag,
-      title: "Tas Kulit Premium Original",
-      brand: "Coach",
-      price: 1200000,
-      originalPrice: 2500000,
-      discount: 52,
-      location: "Bandung",
-      condition: "Baik" as const,
-    },
-    {
-      image: productCamera,
-      title: "Kamera Vintage Film",
-      brand: "Canon",
-      price: 1500000,
-      originalPrice: 2000000,
-      discount: 25,
-      location: "Yogyakarta",
-      condition: "Baik" as const,
-    },
-    {
-      image: productShoes,
-      title: "Sneakers Limited Edition",
-      brand: "Nike",
-      price: 950000,
-      originalPrice: 1500000,
-      discount: 37,
-      location: "Surabaya",
-      condition: "Seperti Baru" as const,
-    },
-  ];
+  const saleProducts = products.filter(p => p.discount);
 
   return (
     <section id="sale" className="bg-secondary/30 py-16">
@@ -72,8 +28,8 @@ const SaleSection = () => {
         </div>
 
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">
-          {saleProducts.map((product, index) => (
-            <div key={index} className="animate-fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
+          {saleProducts.slice(0, 4).map((product, index) => (
+            <div key={product.id} className="animate-fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
               <ProductCard {...product} isSale />
             </div>
           ))}

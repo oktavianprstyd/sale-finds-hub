@@ -1,6 +1,9 @@
 import { Smartphone, ShoppingBag, Sofa, Car, Gamepad2, Home, Dumbbell, MoreHorizontal } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const CategoryGrid = () => {
+  const navigate = useNavigate();
+  
   const categories = [
     { name: "Elektronik", icon: Smartphone, count: "2.4k+" },
     { name: "Fashion", icon: ShoppingBag, count: "3.8k+" },
@@ -28,6 +31,7 @@ const CategoryGrid = () => {
             return (
               <button
                 key={category.name}
+                onClick={() => navigate(`/category/${category.name.toLowerCase()}`)}
                 className="group flex flex-col items-center gap-3 rounded-lg border bg-card p-6 shadow-card transition-all hover:shadow-card-hover hover:border-primary animate-slide-up"
                 style={{ animationDelay: `${index * 0.05}s` }}
               >
